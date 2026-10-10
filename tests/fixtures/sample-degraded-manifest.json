@@ -1,0 +1,26 @@
+{
+  "schema_version": 2,
+  "article_id": "8d028bb3bbc7857a7fd1d136e685dddc5af1ab012bf1c15bc5edca8771252b2b",
+  "revision_id": "ecf1d1819b0581cccf1f6ce18820daa1aa75b6c09da2d66bf06cf85d6eb46492",
+  "title": "Pico 降级样例",
+  "source_filename": "Pico 降级样例.md",
+  "created_at": "2026-10-05T01:02:03.000Z",
+  "updated_at": "2026-10-05T01:02:03.000Z",
+  "body": {
+    "path": "_pico/8d028bb3bbc7857a7fd1d136e685dddc5af1ab012bf1c15bc5edca8771252b2b/ecf1d1819b0581cccf1f6ce18820daa1aa75b6c09da2d66bf06cf85d6eb46492/body.md",
+    "mime": "text/markdown",
+    "bytes": 495,
+    "sha256": "0b06f547ed4a7a5b4c84386afd8e0292ea0728b9d8233760603c34f62c900edc"
+  },
+  "assets": [
+    {
+      "path": "_pico/8d028bb3bbc7857a7fd1d136e685dddc5af1ab012bf1c15bc5edca8771252b2b/ecf1d1819b0581cccf1f6ce18820daa1aa75b6c09da2d66bf06cf85d6eb46492/attachments/Pico 降级样例-0123456789abcdef.png",
+      "mime": "image/png",
+      "bytes": 78,
+      "sha256": "51f61c060c62f4682fc692c9536e12f924082d7bcb790a13fc6b4d0029a6c298",
+      "width": 16,
+      "height": 16,
+      "source_sha256": "51f61c060c62f4682fc692c9536e12f924082d7bcb790a13fc6b4d0029a6c298"
+    }
+  ]
+}

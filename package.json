@@ -1,0 +1,24 @@
+{
+  "name": "sent-to-e-ink-reader",
+  "version": "0.1.5",
+  "private": true,
+  "description": "Send Markdown text to a WebDAV inbox for e-ink readers.",
+  "scripts": {
+    "build": "tsc --noEmit && node esbuild.mjs",
+    "test": "node --import tsx --test tests/*.test.ts",
+    "package": "npm run build && node package.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "esbuild": "^0.25.0",
+    "obsidian": "1.13.1",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0"
+  },
+  "author": "ifRecyclable",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yiifanrecyclable/Sent-to-E-ink-Reader.git"
+  }
+}

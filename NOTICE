@@ -1,0 +1,9 @@
+Sent to E-ink Reader
+Copyright 2026 ifRecyclable
+
+This plugin was developed as part of Pico Reader IF Edition:
+https://github.com/yiifanrecyclable/PicoReader-ifEdition
+
+Existing SPDX copyright and license notices in source files are retained.
+The Obsidian API is provided by the host application and is not bundled.
+Build and test dependencies are recorded in package-lock.json and retain their own licenses.

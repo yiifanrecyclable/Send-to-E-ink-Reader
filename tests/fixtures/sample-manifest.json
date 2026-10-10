@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "article_id": "6ca608af34e2d5cdb1386aa941cf0ddfd0be8c8d5411c366a2593116db37f7e9",
+  "revision_id": "a7241e1c3705d0492061d82c8dce9cee1b2a3c0df82bd0aa65f3c5139347825b",
+  "source_filename": "Pico 文本样例.md",
+  "title": "Pico 文本样例",
+  "created_at": "2026-10-05T01:02:03.000Z",
+  "updated_at": "2026-10-05T01:02:03.000Z",
+  "body": {
+    "path": "_pico/6ca608af34e2d5cdb1386aa941cf0ddfd0be8c8d5411c366a2593116db37f7e9/a7241e1c3705d0492061d82c8dce9cee1b2a3c0df82bd0aa65f3c5139347825b/body.md",
+    "mime": "text/markdown",
+    "bytes": 67,
+    "sha256": "a7241e1c3705d0492061d82c8dce9cee1b2a3c0df82bd0aa65f3c5139347825b"
+  },
+  "assets": []
+}

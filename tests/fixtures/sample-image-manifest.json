@@ -1,0 +1,25 @@
+{
+  "schema_version": 2,
+  "article_id": "e56c68b61d20a809500e2c0a7e7940bd548c49fdcef80726f8d20818fe51232b",
+  "revision_id": "0a57ffcc347e162c35ae077fd61cbff2d3d774df420ce0ef6a92e602210fe022",
+  "source_filename": "Pico 图片样例.md",
+  "title": "Pico 图片样例",
+  "created_at": "2026-10-05T01:02:03.000Z",
+  "updated_at": "2026-10-05T01:02:03.000Z",
+  "body": {
+    "path": "_pico/e56c68b61d20a809500e2c0a7e7940bd548c49fdcef80726f8d20818fe51232b/0a57ffcc347e162c35ae077fd61cbff2d3d774df420ce0ef6a92e602210fe022/body.md",
+    "mime": "text/markdown",
+    "bytes": 114,
+    "sha256": "7ecb6abfadbdff3cd996b0b1250d3be337a60e772539ec61e56016c3abb90ada"
+  },
+  "assets": [
+    {
+      "path": "_pico/e56c68b61d20a809500e2c0a7e7940bd548c49fdcef80726f8d20818fe51232b/0a57ffcc347e162c35ae077fd61cbff2d3d774df420ce0ef6a92e602210fe022/attachments/Pico 图片样例-0123456789abcdef.png",
+      "mime": "image/png",
+      "bytes": 78,
+      "sha256": "51f61c060c62f4682fc692c9536e12f924082d7bcb790a13fc6b4d0029a6c298",
+      "width": 16,
+      "height": 16
+    }
+  ]
+}
