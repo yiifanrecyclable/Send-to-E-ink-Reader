@@ -71,7 +71,8 @@ export function imageReferences(text: string, definitions = new Map<string, stri
   return result;
 }
 function safeName(articleName: string, suffix: string): string {
-  let prefix = articleName.normalize('NFC').replace(/[\/\\\u0000-\u001f\u007f<>:"|?*]/g, '_').trim() || 'article';
+  // eslint-disable-next-line no-control-regex -- Reject unsafe path/filename control characters before WebDAV encoding.
+  let prefix = articleName.normalize('NFC').replace(/[/\\\u0000-\u001f\u007f<>:"|?*]/g, '_').trim() || 'article';
   // 中文：双 SHA256 目录已占路径空间，附件文件名限 96 UTF-8 字节。
   // English: two SHA256 directories consume path space; bound attachment names to 96 UTF-8 bytes.
   while (utf8(prefix).length > 70) prefix = Array.from(prefix).slice(0, -1).join('');
@@ -83,7 +84,7 @@ const random = (): string => Array.from(globalThis.crypto.getRandomValues(new Ui
 // English: placeholders are escaped prose; labels cannot inject another image reference.
 export function imagePlaceholder(alt: string): string {
   const label = unescape(alt).replace(/[\r\n]/g, ' ').trim() || '图片';
-  return `（图片或嵌入未导出：${label.replace(/[\\`*_{}\[\]()<>#!|&]/g, '\\$&')}）`;
+  return `（图片或嵌入未导出：${label.replace(/[\\`*_{}[\]()<>#!|&]/g, '\\$&')}）`;
 }
 export async function exportImages(source: string, articleName: string, environment: ImageExportEnvironment): Promise<ImageExport> {
   const exported = preprocess(source, articleName, true);
@@ -147,7 +148,7 @@ export async function exportImages(source: string, articleName: string, environm
         if (assets.some(item => item.name === name)) throw new Error('附件随机标识重复，请重新发送。');
         asset = { ...converted, name, source_sha256: sourceHash }; reused.set(resolved.key, asset); assets.push(asset);
       }
-      const alt = unescape(reference.alt).replace(/[\r\n]/g, ' ').replace(/[\\\[\]]/g, '\\$&');
+      const alt = unescape(reference.alt).replace(/[\r\n]/g, ' ').replace(/[\\[\]]/g, '\\$&');
       output.push(`![${alt}](attachments/${encodeURIComponent(asset.name)})`);
     }
     appendProse(part.text.slice(cursor));

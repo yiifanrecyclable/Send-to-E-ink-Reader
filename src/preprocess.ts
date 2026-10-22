@@ -21,7 +21,7 @@ export function preprocess(source: string, fallbackTitle: string, images = false
       if (/^".*"$/.test(value)) {
         try { const parsed: unknown = JSON.parse(value); if (typeof parsed === 'string') title = parsed; } catch { /* 保留文件名。/ Keep filename. */ }
       } else if (/^'.*'$/.test(value)) title = value.slice(1, -1).replace(/''/g, "'");
-      else if (!/^[>|\[\{&*!]/.test(value)) title = value.replace(/\s+#.*$/, '').trim();
+      else if (!/^[>|[{&*!]/.test(value)) title = value.replace(/\s+#.*$/, '').trim();
     }
     text = text.slice(frontmatter[0].length);
   } else if (/^---[ \t]*\n/.test(text)) warnings.add('未闭合的 frontmatter 将作为正文保留。');
@@ -78,11 +78,11 @@ function inlineSegments(text: string): { text: string; protected: boolean }[] {
   const parts: { text: string; protected: boolean }[] = [];
   let cursor = 0;
   for (let i = 0; i < runs.length; i++) {
-    const start = runs[i].index!;
+    const start = runs[i].index;
     const endRun = nextSameLength[i];
     if (escaped(text, start) || endRun < 0) continue;
     // 中文：空行分隔段落，不能跨越空行组成行内代码。/ English: blank lines separate paragraphs and cannot be crossed by code spans.
-    const end = runs[endRun].index! + runs[endRun][0].length;
+    const end = runs[endRun].index + runs[endRun][0].length;
     if (/\n[ \t]*\n/.test(text.slice(start, end))) continue;
     parts.push({ text: text.slice(cursor, start), protected: false }, { text: text.slice(start, end), protected: true });
     cursor = end; i = endRun;

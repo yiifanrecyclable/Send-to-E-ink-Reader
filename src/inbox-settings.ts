@@ -20,6 +20,7 @@ export function folderEndpoint(folder: string): string {
   const path = folder.trim();
   if (new TextEncoder().encode(path).length > 240) throw new Error('收件文件夹路径超过 Pico 的240 UTF-8字节上限。');
   const parts = path.split('/');
+  // eslint-disable-next-line no-control-regex -- Reject unsafe path/filename control characters before WebDAV encoding.
   if (!parts.length || parts.some(part => !part || part === '.' || part === '..' || /[\\\u0000-\u001f\u007f]/u.test(part))) {
     throw new Error('收件文件夹不能为空，不使用前后斜杠、连续斜杠或 .、.. 路径。');
   }

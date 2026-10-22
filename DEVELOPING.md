@@ -1,4 +1,4 @@
-# Sent to E-ink Reader 0.1.5：原名 Markdown 纯文本发送
+# Sent to E-ink Reader 0.1.6：原名 Markdown 纯文本发送
 
 第一阶段只发送正文：源笔记 `周记1.md` 直接保存为坚果云收件文件夹 `PicoBox/周记1.md`。同一收件目录内，同名笔记由后一次实际写入覆盖；不同文件夹或 Vault 的同名笔记也相互覆盖。重命名发送为新文件，修改笔记后须手动发送。
 
@@ -10,7 +10,7 @@
 
 见[安装指南](INSTALL.md)。最低Obsidian **1.11.5**，允许移动端，桌面/Android/iPhone共享浏览器代码。命令面板、文件/编辑器菜单已实现，移动端长按菜单及真实安装仍需实测。SecretStorage API同步调用，不会静默把密码写入data.json。
 
-普通设置只有收件文件夹（默认PicoBox）、账号、应用密码。先在坚果云建立收件文件夹，在插件中保存独立第三方应用密码。文件夹支持中文与子路径，自动生成HTTPS WebDAV地址；高级设置保留完整URL和密码存储标识，旧URL/账号/SecretStorage延续。不提供namespace分组。
+普通设置只有收件文件夹（默认PicoBox）、账号、应用密码。先在坚果云建立收件文件夹，在插件中保存独立第三方应用密码。文件夹支持中文与子路径，自动生成HTTPS WebDAV地址；高级设置保留完整URL和密码存储标识，0.1.5及以前需要按INSTALL.md迁移，跨ID不保证设置或SecretStorage自动延续。不提供namespace分组。
 
 运行“发送至 E-ink Reader”，接受图片省略提示。发送时显示“正在发送…”，成功后只显示“发送成功”与“完成”按钮；失败附一句简短原因。不再显示文件路径、回读步骤或取消后续发送按钮。收件路径可在插件设置中查看。在坚果云刷新同一账号的此文件夹查看，再在Pico云列表手动选择.md下载。插件成功表示云文件回读通过，设备仍需单独下载。重新下载同名更新后进度归零及独立本地删除由固件负责验收。
 
@@ -33,8 +33,8 @@ npm test
 npm run package
 ```
 
-Node仅用于构建/测试，运行时使用requestUrl、SecretStorage及浏览器Web Crypto。白名单生成 `build/Sent-to-E-ink-Reader-0.1.5.zip`（zip工具），包含main.js、manifest.json、README/INSTALL/DEVELOPING/CHANGELOG/LICENSE/NOTICE，无styles.css、凭据、笔记或个人配置。打包不安装到用户Vault。
+Node仅用于构建/测试，运行时使用requestUrl、SecretStorage及浏览器Web Crypto。白名单生成 `build/Sent-to-E-ink-Reader-0.1.6.zip`（zip工具），包含main.js、manifest.json、README/INSTALL/DEVELOPING/CHANGELOG/LICENSE/NOTICE，无styles.css、凭据、笔记或个人配置。打包不安装到用户Vault。
 
 76项离线测试含历史协议回归。发送窗口覆盖成功、无变化、认证失败、结果未确认和提前关闭；当前入口覆盖中文原名编码、首次/更新/无变化、同名跨Vault、所有ETag形式、最后写入覆盖、取消、响应丢失、正文不一致、认证/写入失败、文本限额及图片占位。三端浏览器替身确认只GET/PUT/GET同一个.md，不读附件，runtime bundle不含exportImages/convertImage函数。历史图文协议通过不代表当前支持图片。用户已确认0.1.3与if.6的基本推送、下载及阅读可用；新版窗口、移动端安装和后台挂起仍需实测。
 
-官方API参考：[requestUrl](https://docs.obsidian.md/Reference/TypeScript%20API/requestUrl)、[SecretStorage类型](https://github.com/obsidianmd/obsidian-api/blob/master/obsidian.d.ts)、[移动1.11.5 Keychain](https://obsidian.md/changelog/2026-01-20-mobile-v1.11.5/)。升级保留最低版本及现有配置。
+官方API参考：[requestUrl](https://docs.obsidian.md/Reference/TypeScript%20API/requestUrl)、[SecretStorage类型](https://github.com/obsidianmd/obsidian-api/blob/master/obsidian.d.ts)、[移动1.11.5 Keychain](https://obsidian.md/changelog/2026-01-20-mobile-v1.11.5/)。最低版本保持不变；社区ID迁移请见INSTALL.md。

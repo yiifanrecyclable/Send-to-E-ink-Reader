@@ -44,6 +44,7 @@ export async function sha256(bytes: Uint8Array): Promise<string> {
 }
 export function normalizedPath(path: string): string {
   const value = path.normalize('NFC');
+  // eslint-disable-next-line no-control-regex -- Reject unsafe path/filename control characters before WebDAV encoding.
   if (!value || /[\\\u0000-\u001f\u007f]/u.test(value) || value.startsWith('/') ||
       value.split('/').some(p => !p || p === '.' || p === '..') || utf8(value).length > MAX_PATH_BYTES) {
     throw new Error('路径无效，或 UTF-8 长度超过 240 字节。');
@@ -54,7 +55,8 @@ export function normalizedPath(path: string): string {
 // English: source filenames are literal basenames; titles and hashes cannot reconstruct them.
 export function validSourceFilename(value: unknown): value is string {
   return typeof value === 'string' && value === value.normalize('NFC') && value.length > 3 && /\.md$/i.test(value) &&
-    !/[\/\\\u0000-\u001f\u007f]/u.test(value) && utf8(value).length <= MAX_PATH_BYTES;
+  // eslint-disable-next-line no-control-regex -- Reject unsafe path/filename control characters before WebDAV encoding.
+    !/[/\\\u0000-\u001f\u007f]/u.test(value) && utf8(value).length <= MAX_PATH_BYTES;
 }
 export function sourceFilename(vaultPath: string): string {
   const filename = normalizedPath(vaultPath).split('/').at(-1)!;
@@ -63,6 +65,7 @@ export function sourceFilename(vaultPath: string): string {
 }
 export async function articleId(namespace: string, vaultPath: string): Promise<string> {
   const scope = namespace.trim().normalize('NFC');
+  // eslint-disable-next-line no-control-regex -- Reject unsafe path/filename control characters before WebDAV encoding.
   if (!scope || utf8(scope).length > 128 || /[\u0000-\u001f\u007f]/u.test(scope)) {
     throw new Error('请设置非空的共享 namespace（最多 128 UTF-8 字节）。');
   }
@@ -76,7 +79,7 @@ const timestamp = (v: unknown): v is string => typeof v === 'string' &&
   Number.isFinite(Date.parse(v)) && new Date(v).toISOString().replace('.000Z', 'Z') === v.replace('.000Z', 'Z');
 export function parseManifest(text: string, expectedId: string): ArticleManifest {
   if (utf8(text).length > MAX_MANIFEST_BYTES) throw new Error('清单超过协议上限。');
-  const m = JSON.parse(text);
+  const m = JSON.parse(text) as Partial<ArticleManifest> | null;
   if (!m || (m.schema_version !== 1 && m.schema_version !== 2) || !hexId(m.article_id) || m.article_id !== expectedId ||
       !hexId(m.revision_id) || typeof m.title !== 'string' || !m.title.trim() || utf8(m.title).length > 240 ||
       (m.source_filename !== undefined && !validSourceFilename(m.source_filename)) ||

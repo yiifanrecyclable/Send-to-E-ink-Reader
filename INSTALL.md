@@ -2,15 +2,23 @@
 
 ## 首次安装
 
-1. 从 [GitHub Releases](https://github.com/yiifanrecyclable/Sent-to-E-ink-Reader/releases/latest) 下载 `Sent-to-E-ink-Reader-0.1.5.zip` 并解压。
-2. 将解压得到的 **obsidian-pico** 文件夹放入笔记库的 `.obsidian/plugins/` 中。最终应有 `.obsidian/plugins/obsidian-pico/main.js` 和同目录的 `manifest.json`。
+1. 从 [GitHub Releases](https://github.com/yiifanrecyclable/Sent-to-E-ink-Reader/releases/latest) 下载 `Sent-to-E-ink-Reader-0.1.6.zip` 并解压。
+2. 将解压得到的 **sent-to-e-ink-reader** 文件夹放入笔记库的 `.obsidian/plugins/` 中。最终应有 `.obsidian/plugins/sent-to-e-ink-reader/main.js` 和同目录的 `manifest.json`。
 3. 重启 Obsidian，在「设置 → 第三方插件」中启用 **Sent to E-ink Reader**。
 
 手机也使用同样的笔记库内路径，可用文件管理器或电脑复制插件文件。最低 Obsidian 1.11.5；移动端后台发送和安装方式需按设备验证。
 
-## 从 Send to Pico 升级
+## 从旧版手动安装迁移（0.1.5 及以前）
 
-先停用旧插件，只覆盖原 `obsidian-pico` 文件夹里的 `main.js` 和 `manifest.json`，再启用新版。保留原来的 `data.json` 和 Obsidian 密码存储，原账号、文件夹及已保存的应用密码继续使用。为兼容旧版本，安装文件夹仍使用 `obsidian-pico`。
+为了符合官方社区的 ID 规则，0.1.6 将插件标识从 `obsidian-pico` 改为 `sent-to-e-ink-reader`。Obsidian 会把它视为另一个插件，**设置和快捷键不会自动迁移**。
+
+1. 停用旧插件，保留旧 `obsidian-pico` 目录作为备份，不要同时启用两份插件。
+2. 按上方说明安装到新的 `sent-to-e-ink-reader` 文件夹。不要用新文件覆盖旧文件夹。
+3. 在新版设置中重新填写收件文件夹和账号，重新保存第三方应用密码。密码不会打包，也不保证跨插件 ID 共享。
+4. 如有自定义完整 WebDAV 地址或密码存储标识，重新填写对应的高级设置；原有快捷键需重新绑定。
+5. 确认新版可以发送后，再按需删除旧插件目录。云端文件及笔记原文不受迁移影响。
+
+不需要修改坚果云收件目录。新旧版本都按原文件名发送，同名文件仍由后一次发送覆盖。
 
 ## 坚果云设置
 
