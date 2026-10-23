@@ -1,18 +1,26 @@
-# Send to E-ink Reader 0.1.7：原名 Markdown 纯文本发送
+# Send to E-ink Reader 0.1.8：扁平 Markdown 图文导出
 
-第一阶段只发送正文：源笔记 `周记1.md` 直接保存为坚果云收件文件夹 `PicoBox/周记1.md`。同一收件目录内，同名笔记由后一次实际写入覆盖；不同文件夹或 Vault 的同名笔记也相互覆盖。重命名发送为新文件，修改笔记后须手动发送。
+源笔记 `周记1.md` 直接保存为坚果云收件文件夹 `PicoBox/周记1.md`。同一收件目录内，同名笔记由后一次实际写入覆盖；不同文件夹或 Vault 的同名笔记也相互覆盖。重命名发送为新文件，修改笔记后须手动发送。0.1.8提供可选图文导出，图片发送默认关闭以兼容原纯文本使用方式。
 
-只读源笔记，当前编辑器使用未保存正文快照。frontmatter剥离、普通Obsidian双链转可读文字。图片、远程图及笔记嵌入转成正确转义的文字说明，明确提示“本次未发送图片”；标准、引用式及Obsidian图片均不上传。代码块、缩进代码及行内代码示例保留原样，动态查询保留源码而不执行。不会读取附件内容、解码或转换图片。
+只读源笔记，当前编辑器使用未保存正文快照。frontmatter剥离、普通Obsidian双链转可读文字。支持本地PNG/JPEG的标准、引用式及Obsidian图片；不支持内容经确认转成正确转义的文字说明。代码块、缩进代码及行内代码示例保留原样，动态查询保留源码而不执行。关闭图片时仍使用exportText与原有GET/PUT确认路径，不读取附件。
 
-新入口只GET/PUT原文件名.md，不创建 `_pico`、版本目录、清单或 `attachments`，不自动备份或删除云文件。旧开发版云文件保留；历史协议源码与离线fixture测试保留，不被当前入口调用。本阶段不能显示文章图片。
+图文入口只增加单层`attachments`，先MKCOL并GET/条件PUT/回读不可变PNG，全部核验后才写根目录MD。名称使用可读文章前缀及转换内容SHA256前16位，发现同名不同内容即停止，禁止盲覆盖。无变化重发只读取核验。源码保留旧publish协议供历史离线兼容测试，当前入口不调用，不创建`_pico`、清单或版本目录，不自动删除云文件。
+
+## 图片与设备参数
+
+width/height可设置128–4096，grayLevels为2–256的整数，缺失参数默认684/1216/16。SecretStorage及账号字段不进入图片配置。编码为标准非交错灰度PNG，2/4/16灰阶分别使用1/2/4-bit，其他阶数在8-bit样本中均匀量化。Pico图文固件使用16灰阶且宽≤684（已发布0.1.4暂不支持插图）；改参数不代表接收端增加解码能力。
+
+源图仅PNG/JPEG且≤32MiB，解码前校验头部尺寸和≤32Mi像素；按目标宽缩小，普通图限制屏幕高度，长图保留比例与高度，不放大小图。新导出≤2MiB/图、≤4Mi像素/图、高≤8192、每篇≤16MiB/64引用。透明度合成白底，灰度量化只修改导出副本。转换失败或过限需明确确认省略；不抓取远程图。
+
+正文引用采用标准attachments相对路径，编码括号等语法字符，按编码后的240字节限制截短中文前缀。命令“导出至本地文件夹”使用Vault adapter写入库内E-ink Reader导出，不需账号、不写源笔记；先核验附件，再通过临时正文/备份改名提交，拒绝从同一目标文件自我覆盖。
 
 ## 安装、设置和使用
 
 见[安装指南](INSTALL.md)。最低Obsidian **1.11.5**，允许移动端，桌面/Android/iPhone共享浏览器代码。命令面板、文件/编辑器菜单已实现，移动端长按菜单及真实安装仍需实测。SecretStorage API同步调用，不会静默把密码写入data.json。
 
-普通设置只有收件文件夹（默认PicoBox）、账号、应用密码。先在坚果云建立收件文件夹，在插件中保存独立第三方应用密码。文件夹支持中文与子路径，自动生成HTTPS WebDAV地址；高级设置保留完整URL和密码存储标识，0.1.5及以前需要按INSTALL.md迁移，跨ID不保证设置或SecretStorage自动延续。不提供namespace分组。
+普通设置包含图片开关、阅读设备、收件文件夹（默认PicoBox）、账号、应用密码。先在坚果云建立收件文件夹，在插件中保存独立第三方应用密码。文件夹支持中文与子路径，自动生成HTTPS WebDAV地址；高级设置保留完整URL和密码存储标识，旧URL/账号/SecretStorage延续。不提供namespace分组。
 
-运行“发送至 E-ink Reader”，接受图片省略提示。发送时显示“正在发送…”，成功后只显示“发送成功”与“完成”按钮；失败附一句简短原因。不再显示文件路径、回读步骤或取消后续发送按钮。收件路径可在插件设置中查看。在坚果云刷新同一账号的此文件夹查看，再在Pico云列表手动选择.md下载。插件成功表示云文件回读通过，设备仍需单独下载。重新下载同名更新后进度归零及独立本地删除由固件负责验收。
+运行“发送至 E-ink Reader”，必要时接受未支持内容省略提示。发送时显示“正在发送…”，成功后只显示“发送成功”与“完成”按钮；失败附一句简短原因。不显示回读步骤或取消后续发送按钮。收件路径可在插件设置中查看，阅读器仍需另行下载。正文的写入/确认行为沿用下列契约，附件失败不能发布新正文。
 
 ## 写入和确认契约
 
@@ -33,8 +41,8 @@ npm test
 npm run package
 ```
 
-Node仅用于构建/测试，运行时使用requestUrl、SecretStorage及浏览器Web Crypto。白名单生成 `build/Send-to-E-ink-Reader-0.1.7.zip`（zip工具），包含main.js、manifest.json、README/INSTALL/DEVELOPING/CHANGELOG/LICENSE/NOTICE，无styles.css、凭据、笔记或个人配置。打包不安装到用户Vault。
+Node仅用于构建/测试，运行时使用requestUrl、SecretStorage及浏览器Web Crypto。白名单生成 `build/Send-to-E-ink-Reader-0.1.8.zip`（zip工具），包含main.js、manifest.json、README/INSTALL/DEVELOPING/CHANGELOG/LICENSE/NOTICE，无styles.css、凭据、笔记或个人配置。打包不安装到用户Vault。
 
-76项离线测试含历史协议回归。发送窗口覆盖成功、无变化、认证失败、结果未确认和提前关闭；当前入口覆盖中文原名编码、首次/更新/无变化、同名跨Vault、所有ETag形式、最后写入覆盖、取消、响应丢失、正文不一致、认证/写入失败、文本限额及图片占位。三端浏览器替身确认只GET/PUT/GET同一个.md，不读附件，runtime bundle不含exportImages/convertImage函数。历史图文协议通过不代表当前支持图片。用户已确认0.1.3与if.6的基本推送、下载及阅读可用；新版窗口、移动端安装和后台挂起仍需实测。
+离线测试含历史协议回归。当前扁平入口覆盖中文原名编码、首次/更新/无变化、同名跨Vault、最后写入覆盖、取消、响应丢失、正文不一致、认证/写入失败、图文顺序与冲突、设备参数、像素边界及本地导出恢复。三端浏览器替身同时验证显式开启图文、自定义参数、关闭图片和普通纯文本请求；纯文本正文与原导出器逐字比较。历史图文协议通过不替代新链路验证；移动端安装、后台挂起及真机光学效果仍需实测。
 
-官方API参考：[requestUrl](https://docs.obsidian.md/Reference/TypeScript%20API/requestUrl)、[SecretStorage类型](https://github.com/obsidianmd/obsidian-api/blob/master/obsidian.d.ts)、[移动1.11.5 Keychain](https://obsidian.md/changelog/2026-01-20-mobile-v1.11.5/)。最低版本保持不变；社区ID迁移请见INSTALL.md。
+官方API参考：[requestUrl](https://docs.obsidian.md/Reference/TypeScript%20API/requestUrl)、[SecretStorage类型](https://github.com/obsidianmd/obsidian-api/blob/master/obsidian.d.ts)、[移动1.11.5 Keychain](https://obsidian.md/changelog/2026-01-20-mobile-v1.11.5/)。升级保留最低版本及现有配置。

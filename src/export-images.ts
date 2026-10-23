@@ -9,6 +9,7 @@
 import { preprocess, proseSegments, type TextExport } from './preprocess';
 import { type GrayImage } from './image';
 import { sha256, utf8, MAX_ASSETS, MAX_ASSET_BYTES, MAX_TOTAL_ASSET_BYTES } from './protocol';
+import { EXPORT_IMAGE_BYTES, EXPORT_TOTAL_BYTES } from './device-profile';
 export interface ExportAsset extends GrayImage { name: string; source_sha256: string }
 export interface ImageExport extends TextExport { assets: ExportAsset[] }
 export interface ImageSource { key: string; read(): Promise<ArrayBuffer>; mime: string }
@@ -71,15 +72,29 @@ export function imageReferences(text: string, definitions = new Map<string, stri
   return result;
 }
 function safeName(articleName: string, suffix: string): string {
-  // eslint-disable-next-line no-control-regex -- Reject unsafe path/filename control characters before WebDAV encoding.
+  // eslint-disable-next-line no-control-regex -- Reject unsafe filename control characters before WebDAV encoding.
   let prefix = articleName.normalize('NFC').replace(/[/\\\u0000-\u001f\u007f<>:"|?*]/g, '_').trim() || 'article';
-  // 中文：双 SHA256 目录已占路径空间，附件文件名限 96 UTF-8 字节。
-  // English: two SHA256 directories consume path space; bound attachment names to 96 UTF-8 bytes.
-  while (utf8(prefix).length > 70) prefix = Array.from(prefix).slice(0, -1).join('');
-  if (!/^[a-f0-9]{16}$/.test(suffix)) throw new Error('附件随机标识无效。');
+  // 中文：扁平附件文件名保留可读前缀，并为内容指纹留足空间。
+  // English: flat attachment names retain a readable prefix and room for a content fingerprint.
+  while (utf8(prefix).length > 70 || assetReference(`${prefix}-${suffix}.png`).length > 240)
+    prefix = Array.from(prefix).slice(0, -1).join('');
+  if (!/^[a-f0-9]{16}$/.test(suffix)) throw new Error('附件标识无效。');
   return `${prefix}-${suffix}.png`;
 }
-const random = (): string => Array.from(globalThis.crypto.getRandomValues(new Uint8Array(8)), byte => byte.toString(16).padStart(2, '0')).join('');
+function assetReference(name: string): string {
+  return 'attachments/' + encodeURIComponent(name).replace(/[!'()*]/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase());
+}
+function tableImage(text: string, position: number): boolean {
+  const lines = text.split('\n'); let offset = 0, table = false;
+  const separator = /^\s*\|?\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)+\|?\s*$/;
+  for (let i = 0; i < lines.length; i++) {
+    if (!lines[i].trim() || !lines[i].includes('|')) table = false;
+    if (i + 1 < lines.length && lines[i].includes('|') && separator.test(lines[i + 1])) table = true;
+    if (position >= offset && position <= offset + lines[i].length) return table;
+    offset += lines[i].length + 1;
+  }
+  return false;
+}
 // 中文：占位为转义后的普通文字，标签本身也不能注入新图片语法。
 // English: placeholders are escaped prose; labels cannot inject another image reference.
 export function imagePlaceholder(alt: string): string {
@@ -97,7 +112,7 @@ export async function exportImages(source: string, articleName: string, environm
   }
   const warnings = new Set(exported.warnings), assets: ExportAsset[] = [];
   const reused = new Map<string, ExportAsset>();
-  let total = 0;
+  let total = 0, referencesSeen = 0;
   const output: string[] = [];
   for (const part of parts) {
     if (part.protected) { output.push(part.text); continue; }
@@ -117,6 +132,9 @@ export async function exportImages(source: string, articleName: string, environm
     for (const reference of references) {
       if (environment.cancelled?.()) throw new Error('图片导出已取消。');
       appendProse(part.text.slice(cursor, reference.start)); cursor = reference.end;
+      if (tableImage(part.text, reference.start)) {
+        warnings.add('表格内图片暂不支持，已改为文字说明。'); output.push(imagePlaceholder(reference.alt)); continue;
+      }
       if (reference.target === undefined) {
         warnings.add('图片引用缺失或格式不支持，已改为文字占位。'); output.push(imagePlaceholder(reference.alt)); continue;
       }
@@ -142,14 +160,22 @@ export async function exportImages(source: string, articleName: string, environm
           warnings.add('图片读取或转换失败，已改为文字占位；继续发送会省略该图片。');
           output.push(imagePlaceholder(reference.alt)); continue;
         }
-        if (converted.data.length > MAX_ASSET_BYTES || total + converted.data.length > MAX_TOTAL_ASSET_BYTES) throw new Error('文章图片超过附件大小上限，未发送。');
-        total += converted.data.length;
-        const name = safeName(articleName, (environment.random ?? random)());
-        if (assets.some(item => item.name === name)) throw new Error('附件随机标识重复，请重新发送。');
-        asset = { ...converted, name, source_sha256: sourceHash }; reused.set(resolved.key, asset); assets.push(asset);
+        if (converted.data.length > Math.min(MAX_ASSET_BYTES, EXPORT_IMAGE_BYTES)) throw new Error('单张图片超过2MiB，请缩小后重试。');
+        const contentHash = await sha256(converted.data);
+        const name = safeName(articleName, environment.random ? environment.random() : contentHash.slice(0, 16));
+        const existing = assets.find(item => item.name.toLowerCase() === name.toLowerCase());
+        if (existing && (environment.random || await sha256(existing.data) !== contentHash)) throw new Error('附件标识冲突，请重新发送。');
+        if (existing) asset = existing;
+        else {
+          if (total + converted.data.length > Math.min(MAX_TOTAL_ASSET_BYTES, EXPORT_TOTAL_BYTES)) throw new Error('文章图片超过16MiB，未发送。');
+          total += converted.data.length;
+          asset = { ...converted, name, source_sha256: sourceHash }; assets.push(asset);
+        }
+        reused.set(resolved.key, asset);
       }
+      if (++referencesSeen > MAX_ASSETS) throw new Error('文章图片引用超过 64 处，未发送。');
       const alt = unescape(reference.alt).replace(/[\r\n]/g, ' ').replace(/[\\[\]]/g, '\\$&');
-      output.push(`![${alt}](attachments/${encodeURIComponent(asset.name)})`);
+      output.push(`![${alt}](${assetReference(asset.name)})`);
     }
     appendProse(part.text.slice(cursor));
   }

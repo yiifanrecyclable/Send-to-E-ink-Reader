@@ -1,8 +1,8 @@
 {
   "name": "sent-to-e-ink-reader",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "private": true,
-  "description": "Send Markdown text to a WebDAV inbox for e-ink readers.",
+  "description": "Send Markdown and device-optimized images to a WebDAV inbox for e-ink readers.",
   "scripts": {
     "build": "tsc --noEmit && node esbuild.mjs",
     "test": "node --import tsx --test tests/*.test.ts",

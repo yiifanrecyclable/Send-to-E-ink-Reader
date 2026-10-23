@@ -10,6 +10,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { runInNewContext } from 'node:vm';
 import { build } from 'esbuild';
+import { encodeGrayPng } from '../src/image';
 
 
 // 中文：只提供浏览器能力和 Obsidian 替身，不注入 Node 全局。/ English: expose browser capabilities and Obsidian doubles, without Node globals.
@@ -23,9 +24,10 @@ class ElementDouble {
   empty(): void { this.children=[];this.settings=[]; }
 }
 class SettingDouble {
-  name=''; inputs: any[]=[]; buttons: any[]=[];
+  name=''; heading=false; inputs: any[]=[]; buttons: any[]=[];
   constructor(element: unknown) { if(element instanceof ElementDouble)element.settings.push(this); }
   setName(name: string): this { this.name=name;return this; }
+  setHeading(): this { this.heading=true;return this; }
   setDesc(_description: string): this { return this; }
   addButton(callback: (button: unknown) => void): this {
     const button:any = { text:'', setButtonText: (text:string) => {button.text=text;return button;}, setCta: () => button, onClick: (handler:unknown) => {button.click=handler;return button;} }; this.buttons.push(button);
@@ -36,23 +38,29 @@ class SettingDouble {
       setPlaceholder(){return this;},onChange(handler:unknown){this.change=handler;return this;}};
     this.inputs.push(text);callback(text);return this;
   }
+  addToggle(callback: (toggle: any) => void): this {
+    const toggle = { setValue: () => toggle, onChange: (_handler: unknown) => toggle };
+    callback(toggle); return this;
+  }
 }
 class FileDouble { extension = 'md'; basename = '文章'; path = '目录/文章.md'; }
 
 for (const platform of ['desktop', 'ios', 'android']) for (const scenario of (platform === 'desktop'
-  ? ['success', 'images', 'unchanged', 'failure', 'uncertain', 'closed'] : ['success', 'images'])) {
-  const withImages = scenario === 'images';
+  ? ['success', 'images', 'images-off', 'legacy-images', 'custom', 'unchanged', 'failure', 'uncertain', 'closed'] : ['success', 'images'])) {
+  const withImages = ['images', 'images-off', 'legacy-images', 'custom'].includes(scenario);
+  const imagesEnabled = withImages && !['images-off', 'legacy-images'].includes(scenario);
   test(`${platform} ${scenario}: browser-only send flow reports a simple verified result`, async () => {
     const built = await buildPromise;
     const bundle = built.outputFiles[0].text;
     assert.deepEqual([...new Set(built.metafile.outputs[Object.keys(built.metafile.outputs)[0]].imports.map(i => i.path))], ['obsidian']);
     const file = new FileDouble();
+    const sourcePng = await encodeGrayPng(new Uint8ClampedArray([0,0,0,255,127,127,127,255,255,255,255,255]),3,1);
     const notices: string[] = [];
     const requests: { method: string; url: string; body?: string | ArrayBuffer; headers: Record<string, string> }[] = [];
     const cloud = new Map<string, string | ArrayBuffer>();
     let secretReads = 0, imageReads = 0;
     const modals: ModalDouble[] = [];
-    const imageFile = Object.assign(new FileDouble(), { extension: 'png', basename: '图', path: '附件/图.png' });
+    const imageFile = Object.assign(new FileDouble(), { extension: 'png', basename: '图', path: '附件/图.png', stat: { size: 4 } });
     const events = new Map<string, (...args: any[]) => unknown>();
     const app = {
       secretStorage: { getSecret: (id: string) => { assert.equal(id, 'pico-webdav'); secretReads++; return 'mock-app-password'; } },
@@ -62,14 +70,14 @@ for (const platform of ['desktop', 'ios', 'android']) for (const scenario of (pl
         on: (event: string, callback: (...args: any[]) => unknown) => { events.set(event, callback); return {}; }
       },
       metadataCache: { getFirstLinkpathDest: (target: string) => { assert.equal(target, '图.png'); return imageFile; } },
-      vault: { readBinary: async () => { imageReads++; return new ArrayBuffer(4); }, cachedRead: () => { throw new Error('Active snapshot must come from editor'); } }
+      vault: { readBinary: async () => { imageReads++; return new Uint8Array(sourcePng.data).buffer; }, cachedRead: () => { throw new Error('Active snapshot must come from editor'); } }
     };
     class PluginDouble {
       app = app;
       commands: any[] = [];
       saved: unknown;
       settingsTab: any;
-      loadData() { return Promise.resolve({ endpoint: 'https://dav.example.test/dav/inbox/', account: 'test@example.test', namespace: withImages ? '' : 'shared', secretId: 'pico-webdav', password: 'legacy-must-not-persist' }); }
+      loadData() { return Promise.resolve({ endpoint: 'https://dav.example.test/dav/inbox/', account: 'test@example.test', namespace: withImages ? '' : 'shared', secretId: 'pico-webdav', password: 'legacy-must-not-persist', ...(scenario === 'legacy-images' ? {} : { sendImages: scenario !== 'images-off' }), ...(scenario === 'custom' ? { width: 1024, height: 768, grayLevels: 4 } : {}) }); }
       saveData(value: unknown) { this.saved = value; return Promise.resolve(); }
       addSettingTab(tab: unknown) { this.settingsTab=tab; }
       addCommand(command: unknown) { this.commands.push(command); }
@@ -117,14 +125,19 @@ for (const platform of ['desktop', 'ios', 'android']) for (const scenario of (pl
     const plugin = new module.exports.default();
     await plugin.onload();
     assert.equal(plugin.settings.namespace,undefined);
+    assert.equal(plugin.settings.sendImages, scenario === 'legacy-images' ? false : scenario !== 'images-off');
     plugin.settingsTab.display();
     const root=plugin.settingsTab.containerEl as ElementDouble;
-    assert.deepEqual(root.settings.map(row=>row.name),['收件文件夹','账号','应用密码']);
-    assert.equal(root.settings[2].inputs[0].inputEl.type,'password');
+    assert.deepEqual(root.settings.filter(row=>row.name && !row.heading).map(row=>row.name),['发送本地图片','屏幕宽度（像素）','屏幕高度（像素）','灰阶数','收件文件夹','账号','应用密码']);
+    const folderRow=root.settings.find(row=>row.name==='收件文件夹')!;
+    assert.equal(root.settings.find(row=>row.name==='应用密码')!.inputs[0].inputEl.type,'password');
+    assert.equal(plugin.settings.width,scenario==='custom'?1024:684);
+    assert.equal(plugin.settings.height,scenario==='custom'?768:1216);
+    assert.equal(plugin.settings.grayLevels,scenario==='custom'?4:16);
     assert.deepEqual(root.children.find(child=>child.tag==='details')?.settings.map(row=>row.name),['完整 WebDAV 地址','密码存储标识']);
     const originalEndpoint=plugin.settings.endpoint;
-    await root.settings[0].inputs[0].change('');assert.equal(plugin.settings.endpoint,originalEndpoint);
-    await root.settings[0].inputs[0].change('阅读/PicoBox');
+    await folderRow.inputs[0].change('');assert.equal(plugin.settings.endpoint,originalEndpoint);
+    await folderRow.inputs[0].change('阅读/PicoBox');
     assert.equal(plugin.settings.endpoint,'https://dav.jianguoyun.com/dav/%E9%98%85%E8%AF%BB/PicoBox/');
     assert.ok(events.has('file-menu')); assert.ok(events.has('editor-menu'));
     let menuAction: (() => void) | undefined;
@@ -139,7 +152,7 @@ for (const platform of ['desktop', 'ios', 'android']) for (const scenario of (pl
     for (let attempt = 0; plugin.busy && attempt < 100; attempt++) await new Promise(resolve => setTimeout(resolve, 5));
     assert.equal(plugin.busy, false);
     assert.equal(secretReads, 1);
-    const progress=modals.at(-1)!;
+    const progress=modals[0];
     const texts=progress.contentEl.children.map(child=>child.textContent);
     assert.ok(!progress.contentEl.children.some(child=>child.tag==='pre'));
     assert.ok(!texts.some(text=>/取消后续|回读|云端文件|_pico|GET|PUT/.test(text)));
@@ -157,19 +170,25 @@ for (const platform of ['desktop', 'ios', 'android']) for (const scenario of (pl
       assert.equal(cloud.size,scenario==='failure'?0:1);
       assert.ok(!texts.join().includes('mock secret'));
     }
-    const body = requests.find(r => r.method === 'PUT');
-    assert.equal(imageReads, 0);
+    const body = requests.find(r => r.method === 'PUT' && r.url.endsWith('.md'));
+    assert.equal(imageReads, imagesEnabled?1:0);
     if(!['unchanged','failure'].includes(scenario))assert.equal(body?.url, plugin.settings.endpoint + encodeURIComponent(file.basename + '.md'));
-    if(withImages) {
+    if(imagesEnabled) {
+      assert.ok((body?.body as string).includes('![图.png](attachments/'));
+      const image = requests.find(r=>r.method==='PUT'&&r.url.endsWith('.png'));
+      assert.ok(image);assert.equal(new Uint8Array(image.body as ArrayBuffer)[24],scenario==='custom'?2:4);
+      assert.equal(image.headers['If-None-Match'],'*');
+      assert.ok(requests.indexOf(image)<requests.indexOf(body!));
+    } else if(withImages) {
       assert.ok((body?.body as string).includes('图片或嵌入未导出'));
       assert.ok(!(body?.body as string).includes('!['));
     } else if(body)assert.equal(body.body, '# 未保存正文\n可读标题');
-    assert.ok(requests.every(request => request.url === plugin.settings.endpoint+encodeURIComponent(file.basename+'.md')));
-    assert.deepEqual(requests.map(request => request.method),scenario==='failure'?['GET']:scenario==='unchanged'?['GET','GET']:['GET','PUT','GET']);
+    if(!imagesEnabled)assert.ok(requests.every(request => request.url === plugin.settings.endpoint+encodeURIComponent(file.basename+'.md')));
+    assert.deepEqual(requests.map(request => request.method),imagesEnabled?['MKCOL','GET','PUT','GET','GET','PUT','GET']:scenario==='failure'?['GET']:scenario==='unchanged'?['GET','GET']:['GET','PUT','GET']);
     if(body) { assert.equal(body.headers['If-None-Match'],undefined); assert.equal(body.headers['If-Match'],undefined); }
     assert.ok(requests.filter(request => request.method === 'GET').every(request => request.headers['Cache-Control'] === 'no-cache'));
-    assert.ok(!bundle.includes('function convertImage('));
-    assert.ok(!bundle.includes('function exportImages('));
+    assert.ok(bundle.includes('function convertImage('));
+    assert.ok(bundle.includes('function exportImages('));
     await plugin.saveSettings();
     assert.ok(!JSON.stringify(plugin.saved).includes('password'));
     assert.ok(!JSON.stringify(plugin.saved).includes('mock-app-password'));

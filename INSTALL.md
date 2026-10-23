@@ -2,7 +2,7 @@
 
 ## 首次安装
 
-1. 从 [GitHub Releases](https://github.com/yiifanrecyclable/Sent-to-E-ink-Reader/releases/latest) 下载 `Send-to-E-ink-Reader-0.1.7.zip` 并解压。
+1. 从 [GitHub Releases](https://github.com/yiifanrecyclable/Sent-to-E-ink-Reader/releases/latest) 下载 `Send-to-E-ink-Reader-0.1.8.zip` 并解压。
 2. 将解压得到的 **sent-to-e-ink-reader** 文件夹放入笔记库的 `.obsidian/plugins/` 中。最终应有 `.obsidian/plugins/sent-to-e-ink-reader/main.js` 和同目录的 `manifest.json`。
 3. 重启 Obsidian，在「设置 → 第三方插件」中启用 **Send to E-ink Reader**。
 
@@ -34,3 +34,11 @@
 打开 Markdown 笔记，从命令面板或文件/编辑器菜单选择「发送至 E-ink Reader」。图片或嵌入会先提示转成文字说明，确认后发送。文章修改后需再次手动发送。
 
 成功时显示「发送成功」；失败时显示简短原因。若失败，先检查网络、应用密码，以及收件文件夹是否已存在。关闭发送窗口后任务仍继续，完成时会通知。
+
+## 图片与设备设置
+
+「发送本地图片」默认关闭。接收设备支持 Markdown 图片时可开启，支持库内 PNG、JPG/JPEG。Pico默认684×1216像素、16灰阶；其他设备可填写自己的参数。已发布的 if-ink OS 0.1.4 暂不支持Markdown插图，请保持纯文本，等待后续固件。
+
+导出图片存入云端单层 `attachments/`，正文仍按原名保存。不会修改原笔记或原图，不自动删除云端旧图片。远程、不支持、超限或缺失图片会在发送前提示，确认后转为文字说明。
+
+可运行「导出至本地文件夹」，将库内 `E-ink Reader导出/` 中的MD与attachments整体复制到设备文档目录。Pico对应TF的 `markdown/`。

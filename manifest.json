@@ -1,9 +1,9 @@
 {
   "id": "sent-to-e-ink-reader",
   "name": "Send to E-ink Reader",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "minAppVersion": "1.11.5",
-  "description": "Send Markdown text to a WebDAV inbox for e-ink readers.",
+  "description": "Send Markdown and device-optimized images to a WebDAV inbox for e-ink readers.",
   "author": "ifRecyclable",
   "isDesktopOnly": false,
   "authorUrl": "https://github.com/yiifanrecyclable"
