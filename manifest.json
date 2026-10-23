@@ -1,7 +1,7 @@
 {
   "id": "sent-to-e-ink-reader",
-  "name": "Sent to E-ink Reader",
-  "version": "0.1.6",
+  "name": "Send to E-ink Reader",
+  "version": "0.1.7",
   "minAppVersion": "1.11.5",
   "description": "Send Markdown text to a WebDAV inbox for e-ink readers.",
   "author": "ifRecyclable",

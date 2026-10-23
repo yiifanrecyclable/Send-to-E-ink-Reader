@@ -14,7 +14,7 @@ await mkdir(directory, { recursive: true });
 // 中文：白名单防止把 data.json、凭据、依赖或笔记带入测试包。
 // English: whitelist excludes data.json, secrets, dependencies and notes.
 for (const file of ['main.js', 'manifest.json', 'INSTALL.md', 'README.md', 'DEVELOPING.md', 'CHANGELOG.md', 'LICENSE', 'NOTICE']) await copyFile(file, `${directory}/${file}`);
-const archive = `Sent-to-E-ink-Reader-${manifest.version}.zip`;
+const archive = `Send-to-E-ink-Reader-${manifest.version}.zip`;
 await rm(`build/${archive}`, { force: true });
 const zipped = spawnSync('/usr/bin/zip', ['-q', '-r', archive, manifest.id], { cwd: 'build', stdio: 'inherit' });
 if (zipped.status !== 0) throw new Error('Local zip packaging failed');

@@ -1,6 +1,6 @@
-# Sent to E-ink Reader
+# Send to E-ink Reader
 
-作者：**ifRecyclable** · 版本 **0.1.6**
+作者：**ifRecyclable** · 版本 **0.1.7**
 
 在 Obsidian 中一键将当前 Markdown 笔记发送到坚果云指定文件夹，再由电子墨水屏阅读器下载阅读。配合 [if-ink OS](https://github.com/yiifanrecyclable/if-ink-OS) 使用。
 

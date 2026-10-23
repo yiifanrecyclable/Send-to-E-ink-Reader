@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.7
+
+- Correct the display name to **Send to E-ink Reader**.
+- Keep plugin ID `sent-to-e-ink-reader`, settings, commands and text-only sending behavior unchanged; no reinstall or migration is needed from 0.1.6.
+
 ## 0.1.6
 
 - Adopt community-compatible ID `sent-to-e-ink-reader`; existing manual installations need the migration steps in INSTALL.md.

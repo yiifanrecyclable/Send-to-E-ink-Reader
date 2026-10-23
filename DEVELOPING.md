@@ -1,4 +1,4 @@
-# Sent to E-ink Reader 0.1.6：原名 Markdown 纯文本发送
+# Send to E-ink Reader 0.1.7：原名 Markdown 纯文本发送
 
 第一阶段只发送正文：源笔记 `周记1.md` 直接保存为坚果云收件文件夹 `PicoBox/周记1.md`。同一收件目录内，同名笔记由后一次实际写入覆盖；不同文件夹或 Vault 的同名笔记也相互覆盖。重命名发送为新文件，修改笔记后须手动发送。
 
@@ -33,7 +33,7 @@ npm test
 npm run package
 ```
 
-Node仅用于构建/测试，运行时使用requestUrl、SecretStorage及浏览器Web Crypto。白名单生成 `build/Sent-to-E-ink-Reader-0.1.6.zip`（zip工具），包含main.js、manifest.json、README/INSTALL/DEVELOPING/CHANGELOG/LICENSE/NOTICE，无styles.css、凭据、笔记或个人配置。打包不安装到用户Vault。
+Node仅用于构建/测试，运行时使用requestUrl、SecretStorage及浏览器Web Crypto。白名单生成 `build/Send-to-E-ink-Reader-0.1.7.zip`（zip工具），包含main.js、manifest.json、README/INSTALL/DEVELOPING/CHANGELOG/LICENSE/NOTICE，无styles.css、凭据、笔记或个人配置。打包不安装到用户Vault。
 
 76项离线测试含历史协议回归。发送窗口覆盖成功、无变化、认证失败、结果未确认和提前关闭；当前入口覆盖中文原名编码、首次/更新/无变化、同名跨Vault、所有ETag形式、最后写入覆盖、取消、响应丢失、正文不一致、认证/写入失败、文本限额及图片占位。三端浏览器替身确认只GET/PUT/GET同一个.md，不读附件，runtime bundle不含exportImages/convertImage函数。历史图文协议通过不代表当前支持图片。用户已确认0.1.3与if.6的基本推送、下载及阅读可用；新版窗口、移动端安装和后台挂起仍需实测。
 
