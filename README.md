@@ -4,7 +4,7 @@
 
 在 Obsidian 中一键将当前 Markdown 笔记发送到坚果云指定文件夹，再由电子墨水屏阅读器下载阅读。配合 [if-ink OS](https://github.com/yiifanrecyclable/if-ink-OS) 使用。
 
-[下载安装包](https://github.com/yiifanrecyclable/Sent-to-E-ink-Reader/releases/latest) · [安装与设置](INSTALL.md)
+[下载安装包](https://github.com/yiifanrecyclable/Send-to-E-ink-Reader/releases/latest) · [安装与设置](INSTALL.md)
 
 - 按原文件名保存，例如 `PicoBox/周记.md`；同名文件由后一次发送覆盖。
 - 修改笔记后手动发送，发送窗口只显示进度与成功或失败结果。

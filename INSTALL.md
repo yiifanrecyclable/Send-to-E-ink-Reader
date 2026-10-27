@@ -2,7 +2,7 @@
 
 ## 首次安装
 
-1. 从 [GitHub Releases](https://github.com/yiifanrecyclable/Sent-to-E-ink-Reader/releases/latest) 下载 `Send-to-E-ink-Reader-0.1.8.zip` 并解压。
+1. 从 [GitHub Releases](https://github.com/yiifanrecyclable/Send-to-E-ink-Reader/releases/latest) 下载 `Send-to-E-ink-Reader-0.1.8.zip` 并解压。
 2. 将解压得到的 **sent-to-e-ink-reader** 文件夹放入笔记库的 `.obsidian/plugins/` 中。最终应有 `.obsidian/plugins/sent-to-e-ink-reader/main.js` 和同目录的 `manifest.json`。
 3. 重启 Obsidian，在「设置 → 第三方插件」中启用 **Send to E-ink Reader**。
 
