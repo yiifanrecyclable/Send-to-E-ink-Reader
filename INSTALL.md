@@ -2,7 +2,7 @@
 
 ## 首次安装
 
-1. 从 [GitHub Releases](https://github.com/yiifanrecyclable/Send-to-E-ink-Reader/releases/latest) 下载 `Send-to-E-ink-Reader-0.1.8.zip` 并解压。
+1. 从 [GitHub Releases](https://github.com/yiifanrecyclable/Send-to-E-ink-Reader/releases/latest) 下载 `Send-to-E-ink-Reader-0.1.9.zip` 并解压。
 2. 将解压得到的 **sent-to-e-ink-reader** 文件夹放入笔记库的 `.obsidian/plugins/` 中。最终应有 `.obsidian/plugins/sent-to-e-ink-reader/main.js` 和同目录的 `manifest.json`。
 3. 重启 Obsidian，在「设置 → 第三方插件」中启用 **Send to E-ink Reader**。
 
@@ -37,7 +37,7 @@
 
 ## 图片与设备设置
 
-「发送本地图片」默认关闭。接收设备支持 Markdown 图片时可开启，支持库内 PNG、JPG/JPEG。Pico默认684×1216像素、16灰阶；其他设备可填写自己的参数。已发布的 if-ink OS 0.1.4 暂不支持Markdown插图，请保持纯文本，等待后续固件。
+「发送本地图片」默认关闭。接收设备支持 Markdown 图片时可开启，支持库内 PNG、JPG/JPEG、静态WebP。Pico默认684×1216像素、16灰阶；其他设备可填写自己的参数。接收固件须支持 Markdown 插图；未支持时请保持纯文本发送。
 
 导出图片存入云端单层 `attachments/`，正文仍按原名保存。不会修改原笔记或原图，不自动删除云端旧图片。远程、不支持、超限或缺失图片会在发送前提示，确认后转为文字说明。
 

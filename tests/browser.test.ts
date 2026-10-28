@@ -9,6 +9,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { runInNewContext } from 'node:vm';
+import { readFile } from 'node:fs/promises';
 import { build } from 'esbuild';
 import { encodeGrayPng } from '../src/image';
 
@@ -46,31 +47,34 @@ class SettingDouble {
 class FileDouble { extension = 'md'; basename = '文章'; path = '目录/文章.md'; }
 
 for (const platform of ['desktop', 'ios', 'android']) for (const scenario of (platform === 'desktop'
-  ? ['success', 'images', 'images-off', 'legacy-images', 'custom', 'unchanged', 'failure', 'uncertain', 'closed'] : ['success', 'images'])) {
-  const withImages = ['images', 'images-off', 'legacy-images', 'custom'].includes(scenario);
+  ? ['success', 'images', 'webp', 'images-off', 'legacy-images', 'custom', 'unchanged', 'failure', 'uncertain', 'closed'] : ['success', 'images', 'webp'])) {
+  const withImages = ['images', 'webp', 'images-off', 'legacy-images', 'custom'].includes(scenario);
   const imagesEnabled = withImages && !['images-off', 'legacy-images'].includes(scenario);
   test(`${platform} ${scenario}: browser-only send flow reports a simple verified result`, async () => {
     const built = await buildPromise;
     const bundle = built.outputFiles[0].text;
     assert.deepEqual([...new Set(built.metafile.outputs[Object.keys(built.metafile.outputs)[0]].imports.map(i => i.path))], ['obsidian']);
     const file = new FileDouble();
+    const extension = scenario === 'webp' ? 'WEBP' : 'png';
+    const imageName = `图.${extension}`;
+    const webp = await readFile(new URL('fixtures/webp-alpha.webp', import.meta.url));
     const sourcePng = await encodeGrayPng(new Uint8ClampedArray([0,0,0,255,127,127,127,255,255,255,255,255]),3,1);
     const notices: string[] = [];
     const requests: { method: string; url: string; body?: string | ArrayBuffer; headers: Record<string, string> }[] = [];
     const cloud = new Map<string, string | ArrayBuffer>();
     let secretReads = 0, imageReads = 0;
     const modals: ModalDouble[] = [];
-    const imageFile = Object.assign(new FileDouble(), { extension: 'png', basename: '图', path: '附件/图.png', stat: { size: 4 } });
+    const imageFile = Object.assign(new FileDouble(), { extension, basename: '图', path: `附件/${imageName}`, stat: { size: 4 } });
     const events = new Map<string, (...args: any[]) => unknown>();
     const app = {
       secretStorage: { getSecret: (id: string) => { assert.equal(id, 'pico-webdav'); secretReads++; return 'mock-app-password'; } },
       workspace: {
         getActiveFile: () => file,
-        getMostRecentLeaf: () => ({ view: { file, editor: { getValue: () => withImages ? '![[图.png]] ![同图](图.png)' : '# 未保存正文\n[[另一笔记|可读标题]]' } } }),
+        getMostRecentLeaf: () => ({ view: { file, editor: { getValue: () => withImages ? `![[${imageName}]] ![同图](${imageName})` : '# 未保存正文\n[[另一笔记|可读标题]]' } } }),
         on: (event: string, callback: (...args: any[]) => unknown) => { events.set(event, callback); return {}; }
       },
-      metadataCache: { getFirstLinkpathDest: (target: string) => { assert.equal(target, '图.png'); return imageFile; } },
-      vault: { readBinary: async () => { imageReads++; return new Uint8Array(sourcePng.data).buffer; }, cachedRead: () => { throw new Error('Active snapshot must come from editor'); } }
+      metadataCache: { getFirstLinkpathDest: (target: string) => { assert.equal(target, imageName); return imageFile; } },
+      vault: { readBinary: async () => { imageReads++; return scenario === 'webp' ? Uint8Array.from(webp).buffer : new Uint8Array(sourcePng.data).buffer; }, cachedRead: () => { throw new Error('Active snapshot must come from editor'); } }
     };
     class PluginDouble {
       app = app;
@@ -174,7 +178,7 @@ for (const platform of ['desktop', 'ios', 'android']) for (const scenario of (pl
     assert.equal(imageReads, imagesEnabled?1:0);
     if(!['unchanged','failure'].includes(scenario))assert.equal(body?.url, plugin.settings.endpoint + encodeURIComponent(file.basename + '.md'));
     if(imagesEnabled) {
-      assert.ok((body?.body as string).includes('![图.png](attachments/'));
+      assert.ok((body?.body as string).includes(`![${imageName}](attachments/`));
       const image = requests.find(r=>r.method==='PUT'&&r.url.endsWith('.png'));
       assert.ok(image);assert.equal(new Uint8Array(image.body as ArrayBuffer)[24],scenario==='custom'?2:4);
       assert.equal(image.headers['If-None-Match'],'*');

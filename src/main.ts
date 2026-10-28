@@ -15,7 +15,7 @@ import { publishFlat } from './flat-publish';
 import { ObsidianDavTransport } from './transport';
 import { exportText } from './export-text';
 import { exportImages, type ImageExport } from './export-images';
-import { convertImage } from './image';
+import { convertImage, sourceImageMime } from './image';
 import { deviceProfile, PICO_PROFILE, type DeviceProfile } from './device-profile';
 import { endpointFolder, folderEndpoint } from './inbox-settings';
 import { exportLocal, LOCAL_EXPORT_ROOT } from './local-export';
@@ -77,8 +77,10 @@ export default class PicoPlugin extends Plugin {
     return exportImages(snapshot, file.basename, {
       resolve: target => {
         const attachment = this.app.metadataCache.getFirstLinkpathDest(target, file.path);
-        if (!(attachment instanceof TFile) || !/^(png|jpe?g)$/i.test(attachment.extension) || attachment.stat.size > 32 * 1024 * 1024) return undefined;
-        return { key: attachment.path, mime: attachment.extension.toLowerCase() === 'png' ? 'image/png' : 'image/jpeg',
+        if (!(attachment instanceof TFile) || attachment.stat.size > 32 * 1024 * 1024) return undefined;
+        const mime = sourceImageMime(attachment.extension);
+        if (!mime) return undefined;
+        return { key: attachment.path, mime,
           read: () => this.app.vault.readBinary(attachment) };
       },
       convert: (bytes, mime) => convertImage(bytes, mime, deviceProfile(settings)), cancelled: () => cancel.requested
@@ -148,7 +150,7 @@ class PicoSettingsTab extends PluginSettingTab {
   display(): void {
     const { containerEl } = this; containerEl.empty();
     containerEl.createEl('p', { text: '手动发送 Markdown 和本地图片。正文按原文件名保存，图片放在 attachments；同名笔记由后一次发送更新，修改后需重新发送。源笔记和原图不变。' });
-    new Setting(containerEl).setName('发送本地图片').setDesc('支持PNG、JPG/JPEG；接收设备需支持Markdown插图。默认关闭，保持纯文本发送；远程图片和其他嵌入会在发送前提示。')
+    new Setting(containerEl).setName('发送本地图片').setDesc('支持PNG、JPG/JPEG、静态WebP，转换为灰度PNG；接收设备需支持Markdown插图。默认关闭，保持纯文本发送；远程图片、动画和其他嵌入会在发送前提示。')
       .addToggle(toggle => toggle.setValue(this.plugin.settings.sendImages).onChange(async value => {
         this.plugin.settings.sendImages = value; await this.plugin.saveSettings();
       }));

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.9
+
+- Support static WebP attachments (lossy, lossless and alpha), converting export copies to the configured screen resolution and grayscale PNG profile. Transparent pixels are composited over white.
+- Validate WebP dimensions and container boundaries before decoding; animated WebP and failed conversions require confirmation before omission.
+- Preserve source notes/images, text-only sending, existing PNG/JPEG handling, plugin ID, settings and credentials.
+
 ## 0.1.8
 
 - Add optional local PNG/JPEG export with configurable screen resolution and grayscale levels; default profile is Pico 684×1216 / 16 levels. Image sending defaults off, preserving existing text-only behavior.

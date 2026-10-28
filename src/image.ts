@@ -11,6 +11,50 @@ export const IMAGE_WIDTH = PICO_PROFILE.width;
 export const IMAGE_HEIGHT = PICO_PROFILE.height;
 export const MAX_IMAGE_PIXELS = 32 * 1024 * 1024;
 export interface GrayImage { data: Uint8Array; width: number; height: number }
+/// 中文：库内附件扩展名映射；实际内容仍在解码前校验。/ English: map vault extensions; validate actual content before decoding.
+export function sourceImageMime(extension: string): string | undefined {
+  switch (extension.toLowerCase()) {
+    case 'png': return 'image/png';
+    case 'jpg': case 'jpeg': return 'image/jpeg';
+    case 'webp': return 'image/webp';
+    default: return undefined;
+  }
+}
+// 中文：读取三类静态WebP头，检查RIFF边界；动画不静默截取任意帧。
+// English: inspect all three still WebP headers and RIFF bounds; never silently pick an animation frame.
+function webpSize(data: Uint8Array, view: DataView): { width: number; height: number } {
+  const invalid = () => new Error('WebP图片结构无效，未转换。');
+  const tag = (offset: number) => String.fromCharCode(...data.subarray(offset, offset + 4));
+  const u24 = (offset: number) => data[offset] + data[offset + 1] * 256 + data[offset + 2] * 65536;
+  if (data.length < 20 || tag(0) !== 'RIFF' || tag(8) !== 'WEBP' || view.getUint32(4, true) + 8 !== data.length) throw invalid();
+  let canvas: { width: number; height: number } | undefined, frame: typeof canvas;
+  for (let offset = 12; offset < data.length;) {
+    if (offset + 8 > data.length) throw invalid();
+    const type = tag(offset), length = view.getUint32(offset + 4, true), start = offset + 8;
+    const end = start + length, next = end + (length & 1);
+    if (next > data.length || ((length & 1) && data[end] !== 0)) throw invalid();
+    if (type === 'ANIM' || type === 'ANMF') throw new Error('暂不支持动画WebP，请先导出静态图片。');
+    if (type === 'VP8X') {
+      if (offset !== 12 || length !== 10 || canvas) throw invalid();
+      if (data[start] & 2) throw new Error('暂不支持动画WebP，请先导出静态图片。');
+      canvas = { width: u24(start + 4) + 1, height: u24(start + 7) + 1 };
+    } else if (type === 'VP8 ' || type === 'VP8L') {
+      if (frame) throw invalid();
+      if (type === 'VP8 ') {
+        if (length < 10 || (data[start] & 1) || data[start + 3] !== 0x9d || data[start + 4] !== 1 || data[start + 5] !== 0x2a) throw invalid();
+        frame = { width: view.getUint16(start + 6, true) & 0x3fff, height: view.getUint16(start + 8, true) & 0x3fff };
+      } else {
+        if (length < 5 || data[start] !== 0x2f) throw invalid();
+        const bits = view.getUint32(start + 1, true);
+        if (bits >>> 29) throw invalid();
+        frame = { width: (bits & 0x3fff) + 1, height: ((bits >>> 14) & 0x3fff) + 1 };
+      }
+    }
+    offset = next;
+  }
+  if (!frame || (canvas && (canvas.width !== frame.width || canvas.height !== frame.height))) throw invalid();
+  return canvas ?? frame;
+}
 // 浏览器解码前读取尺寸，拒绝压缩很小但解码后极大的源图。
 // Inspect dimensions before browser decoding to reject small compressed pixel bombs.
 export function sourceImageSize(source: ArrayBuffer, mime: string): { width: number; height: number } {
@@ -34,6 +78,8 @@ export function sourceImageSize(source: ArrayBuffer, mime: string): { width: num
       }
       offset += length;
     }
+  } else if (mime === 'image/webp') {
+    ({ width, height } = webpSize(data, view));
   }
   if (!width || !height || width * height > MAX_IMAGE_PIXELS) throw new Error('图片尺寸无效或超过像素上限，未转换。');
   return { width, height };
@@ -121,8 +167,8 @@ export async function encodeGrayPng(rgba: Uint8ClampedArray, width: number, heig
 }
 export async function convertImage(source: ArrayBuffer, mime: string, options: DeviceProfile = PICO_PROFILE): Promise<GrayImage> {
   const profile = deviceProfile(options);
-  if (!['image/png', 'image/jpeg'].includes(mime) || source.byteLength > 32 * 1024 * 1024)
-    throw new Error('仅支持32MiB以内的PNG或JPEG源图片。');
+  if (!['image/png', 'image/jpeg', 'image/webp'].includes(mime) || source.byteLength > 32 * 1024 * 1024)
+    throw new Error('仅支持32MiB以内的PNG、JPEG或静态WebP源图片。');
   const dimensions = sourceImageSize(source, mime);
   // 解码前也检查导出尺寸，过长图不进入大画布分配。
   // Reject oversized exports before allocating a browser canvas.
