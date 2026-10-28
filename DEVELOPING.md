@@ -1,6 +1,6 @@
-# Send to E-ink Reader 0.1.9：扁平 Markdown 图文导出
+# Send to E-ink Reader 0.1.10：扁平 Markdown 图文导出
 
-源笔记 `周记1.md` 直接保存为坚果云收件文件夹 `PicoBox/周记1.md`。同一收件目录内，同名笔记由后一次实际写入覆盖；不同文件夹或 Vault 的同名笔记也相互覆盖。重命名发送为新文件，修改笔记后须手动发送。0.1.9提供可选图文导出，图片发送默认关闭以兼容原纯文本使用方式。
+源笔记 `周记1.md` 直接保存为坚果云收件文件夹 `PicoBox/周记1.md`。同一收件目录内，同名笔记由后一次实际写入覆盖；不同文件夹或 Vault 的同名笔记也相互覆盖。重命名发送为新文件，修改笔记后须手动发送。0.1.10提供可选图文导出，图片发送默认关闭以兼容原纯文本使用方式。
 
 只读源笔记，当前编辑器使用未保存正文快照。frontmatter剥离、普通Obsidian双链转可读文字。支持本地PNG/JPEG/静态WebP的标准、引用式及Obsidian图片；不支持内容经确认转成正确转义的文字说明。代码块、缩进代码及行内代码示例保留原样，动态查询保留源码而不执行。关闭图片时仍使用exportText与原有GET/PUT确认路径，不读取附件。
 
@@ -10,7 +10,7 @@
 
 width/height可设置128–4096，grayLevels为2–256的整数，缺失参数默认684/1216/16。SecretStorage及账号字段不进入图片配置。编码为标准非交错灰度PNG，2/4/16灰阶分别使用1/2/4-bit，其他阶数在8-bit样本中均匀量化。Pico图文固件使用16灰阶且宽≤684（接收固件须支持Markdown插图）；改参数不代表接收端增加解码能力。
 
-源图支持PNG/JPEG/静态WebP且≤32MiB，解码前校验头部尺寸和≤32Mi像素；按目标宽缩小，普通图限制屏幕高度，长图保留比例与高度，不放大小图。新导出≤2MiB/图、≤4Mi像素/图、高≤8192、每篇≤16MiB/64引用。透明度合成白底，灰度量化只修改导出副本。转换失败或过限需明确确认省略；不抓取远程图。
+源图支持PNG/JPEG/静态WebP且≤32MiB，先按文件签名识别实际PNG/JPEG/WebP编码，再校验头部尺寸和≤32Mi像素；按目标宽缩小，普通图限制屏幕高度，长图保留比例与高度，不放大小图。新导出≤2MiB/图、≤4Mi像素/图、高≤8192、每篇≤16MiB/64引用。透明度合成白底，灰度量化只修改导出副本。转换失败或过限需明确确认省略；不抓取远程图。
 
 正文引用采用标准attachments相对路径，编码括号等语法字符，按编码后的240字节限制截短中文前缀。命令“导出至本地文件夹”使用Vault adapter写入库内E-ink Reader导出，不需账号、不写源笔记；先核验附件，再通过临时正文/备份改名提交，拒绝从同一目标文件自我覆盖。
 
@@ -41,7 +41,7 @@ npm test
 npm run package
 ```
 
-Node仅用于构建/测试，运行时使用requestUrl、SecretStorage及浏览器Web Crypto。白名单生成 `build/Send-to-E-ink-Reader-0.1.9.zip`（zip工具），包含main.js、manifest.json、README/INSTALL/DEVELOPING/CHANGELOG/LICENSE/NOTICE，无styles.css、凭据、笔记或个人配置。打包不安装到用户Vault。
+Node仅用于构建/测试，运行时使用requestUrl、SecretStorage及浏览器Web Crypto。白名单生成 `build/Send-to-E-ink-Reader-0.1.10.zip`（zip工具），包含main.js、manifest.json、README/INSTALL/DEVELOPING/CHANGELOG/LICENSE/NOTICE，无styles.css、凭据、笔记或个人配置。打包不安装到用户Vault。
 
 离线测试含历史协议回归。当前扁平入口覆盖中文原名编码、首次/更新/无变化、同名跨Vault、最后写入覆盖、取消、响应丢失、正文不一致、认证/写入失败、图文顺序与冲突、设备参数、像素边界及本地导出恢复。三端浏览器替身同时验证显式开启图文、自定义参数、关闭图片和普通纯文本请求；纯文本正文与原导出器逐字比较。历史图文协议通过不替代新链路验证；移动端安装、后台挂起及真机光学效果仍需实测。
 

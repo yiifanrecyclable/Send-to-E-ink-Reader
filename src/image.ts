@@ -20,6 +20,16 @@ export function sourceImageMime(extension: string): string | undefined {
     default: return undefined;
   }
 }
+// 中文：扩展名可能与实际编码不同；按文件签名选择校验器与浏览器解码类型。
+// English: extensions may mislabel image encoding; select validation and browser MIME from the file signature.
+export function sourceImageMimeFromBytes(source: ArrayBuffer): string | undefined {
+  const data = new Uint8Array(source);
+  if (data.length >= 8 && data.subarray(0, 8).join(',') === '137,80,78,71,13,10,26,10') return 'image/png';
+  if (data.length >= 3 && data[0] === 255 && data[1] === 216 && data[2] === 255) return 'image/jpeg';
+  if (data.length >= 12 && data.subarray(0, 4).join(',') === '82,73,70,70' &&
+      data.subarray(8, 12).join(',') === '87,69,66,80') return 'image/webp';
+  return undefined;
+}
 // 中文：读取三类静态WebP头，检查RIFF边界；动画不静默截取任意帧。
 // English: inspect all three still WebP headers and RIFF bounds; never silently pick an animation frame.
 function webpSize(data: Uint8Array, view: DataView): { width: number; height: number } {
@@ -169,6 +179,9 @@ export async function convertImage(source: ArrayBuffer, mime: string, options: D
   const profile = deviceProfile(options);
   if (!['image/png', 'image/jpeg', 'image/webp'].includes(mime) || source.byteLength > 32 * 1024 * 1024)
     throw new Error('仅支持32MiB以内的PNG、JPEG或静态WebP源图片。');
+  const actualMime = sourceImageMimeFromBytes(source);
+  if (!actualMime) throw new Error('图片实际内容不是支持的PNG、JPEG或静态WebP，未转换。');
+  mime = actualMime;
   const dimensions = sourceImageSize(source, mime);
   // 解码前也检查导出尺寸，过长图不进入大画布分配。
   // Reject oversized exports before allocating a browser canvas.

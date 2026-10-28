@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.10
+
+- Detect PNG/JPEG/WebP from file signatures before validation and browser decoding. Imported attachments with a misleading extension (such as JPEG/PNG named `.webp`) now convert normally without renaming or changing the source.
+- Retain format/size/animation checks, existing settings, text-only behavior and verified attachment-first publication.
+
 ## 0.1.9
 
 - Support static WebP attachments (lossy, lossless and alpha), converting export copies to the configured screen resolution and grayscale PNG profile. Transparent pixels are composited over white.

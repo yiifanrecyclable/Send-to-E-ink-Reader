@@ -47,15 +47,15 @@ class SettingDouble {
 class FileDouble { extension = 'md'; basename = '文章'; path = '目录/文章.md'; }
 
 for (const platform of ['desktop', 'ios', 'android']) for (const scenario of (platform === 'desktop'
-  ? ['success', 'images', 'webp', 'images-off', 'legacy-images', 'custom', 'unchanged', 'failure', 'uncertain', 'closed'] : ['success', 'images', 'webp'])) {
-  const withImages = ['images', 'webp', 'images-off', 'legacy-images', 'custom'].includes(scenario);
+  ? ['success', 'images', 'webp', 'mislabeled-webp', 'images-off', 'legacy-images', 'custom', 'unchanged', 'failure', 'uncertain', 'closed'] : ['success', 'images', 'webp', 'mislabeled-webp'])) {
+  const withImages = ['images', 'webp', 'mislabeled-webp', 'images-off', 'legacy-images', 'custom'].includes(scenario);
   const imagesEnabled = withImages && !['images-off', 'legacy-images'].includes(scenario);
   test(`${platform} ${scenario}: browser-only send flow reports a simple verified result`, async () => {
     const built = await buildPromise;
     const bundle = built.outputFiles[0].text;
     assert.deepEqual([...new Set(built.metafile.outputs[Object.keys(built.metafile.outputs)[0]].imports.map(i => i.path))], ['obsidian']);
     const file = new FileDouble();
-    const extension = scenario === 'webp' ? 'WEBP' : 'png';
+    const extension = ['webp', 'mislabeled-webp'].includes(scenario) ? 'WEBP' : 'png';
     const imageName = `图.${extension}`;
     const webp = await readFile(new URL('fixtures/webp-alpha.webp', import.meta.url));
     const sourcePng = await encodeGrayPng(new Uint8ClampedArray([0,0,0,255,127,127,127,255,255,255,255,255]),3,1);
@@ -122,7 +122,10 @@ for (const platform of ['desktop', 'ios', 'android']) for (const scenario of (pl
     runInNewContext(bundle, { module, exports: module.exports,
       require: (name: string) => { assert.equal(name, 'obsidian'); return api; },
       crypto: globalThis.crypto, TextEncoder, URL, btoa, setTimeout, clearTimeout, Blob, Response, CompressionStream,
-      createImageBitmap: async () => ({ width: 3, height: 1, close: () => {} }),
+      createImageBitmap: async (blob: Blob) => {
+        assert.equal(blob.type, scenario === 'webp' ? 'image/webp' : 'image/png');
+        return { width: 3, height: 1, close: () => {} };
+      },
       document: { createElement: () => ({ width: 0, height: 0, getContext: () => ({
         fillRect: () => {}, drawImage: () => {}, getImageData: () => ({ data: new Uint8ClampedArray([0, 0, 0, 255, 127, 127, 127, 255, 255, 255, 255, 255]) })
       }) }) } });

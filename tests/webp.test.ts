@@ -6,7 +6,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFile } from 'node:fs/promises';
-import { sourceImageMime, sourceImageSize, convertImage } from '../src/image';
+import { sourceImageMime, sourceImageMimeFromBytes, sourceImageSize, convertImage } from '../src/image';
 import { exportImages } from '../src/export-images';
 
 async function fixture(name: string): Promise<ArrayBuffer> {
@@ -45,4 +45,17 @@ test('failed WebP decode degrades with a warning while source and ordinary text 
   assert.equal(result.assets.length, 0);assert.ok(result.warnings.length);
   assert.ok(result.body.startsWith('正文\n'));assert.deepEqual(bytes, before);
   assert.equal((await exportImages('纯文本', '测试', { resolve: () => { throw Error('unused'); }, convert: convertImage })).body, '纯文本');
+});
+
+test('actual file signatures override misleading extensions without accepting arbitrary content', async () => {
+  const png = Uint8Array.from(await readFile(new URL('fixtures/sample-image.png', import.meta.url))).buffer;
+  assert.equal(sourceImageMimeFromBytes(png), 'image/png');
+  assert.equal(sourceImageMimeFromBytes(new Uint8Array([255,216,255,224]).buffer), 'image/jpeg');
+  for (const kind of ['lossy', 'lossless', 'alpha'])
+    assert.equal(sourceImageMimeFromBytes(await fixture(kind)), 'image/webp');
+  for (const bytes of [new ArrayBuffer(0), new TextEncoder().encode('<svg></svg>').buffer, new Uint8Array([255,216]).buffer])
+    assert.equal(sourceImageMimeFromBytes(bytes), undefined);
+  await assert.rejects(convertImage(new TextEncoder().encode('not an image').buffer, 'image/webp'), /实际内容/);
+  const truncated = png.slice(0, 12);
+  await assert.rejects(convertImage(truncated, 'image/webp'), /尺寸/);
 });

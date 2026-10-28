@@ -1,6 +1,6 @@
 {
   "name": "sent-to-e-ink-reader",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "private": true,
   "description": "Send Markdown and device-optimized images to a WebDAV inbox for e-ink readers.",
   "scripts": {
